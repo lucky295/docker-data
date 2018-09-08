@@ -18,7 +18,7 @@ services:
   ports:
   - 5001:80
   depends_on: 
-   - redis
+   - db
 
  worker:
   image: docker/example-voting-app-worker
