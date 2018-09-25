@@ -1,0 +1,53 @@
+FROM centos:centos7
+
+MAINTAINER asrini < sriniavsarao.a@pioneer.com>
+
+################# set environment variables ############################
+ENV http_proxy=http://jdcproxy.phibred.com:8080
+#ENV https_proxy=http://jdcproxy.phibred.com:8080
+#ENV no_proxy=localhost,0.0.0.0,127.0.0.1,192.168.99.100,*.phibred.com,*.dupont.com
+ENV ftp_proxy=http://jdcproxy.phibred.com:8080
+
+#################### Install required packages #########################
+RUN yum update -y
+RUN yum install -y wget curl
+RUN yum groupinstall -y "Development Tools"
+RUN yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel
+RUN yum install -y gcc
+#RUN yum -y install gcc-c++ 
+#RUN yum install -y make
+#Run yum install -y perl
+
+################## aws-cli install #####################################
+RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+
+RUN python get-pip.py
+RUN pip install awscli
+
+
+##################### install perl ###################################
+##WORKDIR /shared
+##ADD http://www.cpan.org/src/5.0/perl-5.12.5.tar.gz /shared
+##RUN tar -xzf perl-5.12.5.tar.gz
+##WORKDIR /shared/perl-5.12.5
+##RUN ./Configure -des -Dprefix=/opt/perl-5.12.5/localperl
+##RUN make
+##RUN make test
+##RUN make install
+##RUN rm -rf /shared/perl5.12.5
+
+######################### install canu #################################
+RUN mkdir /soft && cd /soft
+#RUN cd /soft
+WORKDIR /soft
+#RUN wget https://github.com/marbl/canu/archive/v1.7.tar.gz
+ADD https://github.com/marbl/canu/archive/v1.7.tar.gz /soft
+RUN tar -xvf v1.7.tar.gz
+#WORKDIR /soft/canu-1.7/src
+#RUN make -j8
+RUN cd canu-1.7/src && make -j8
+#RUN chmod +x /soft/canu-1.7/Linux-amd64/bin/canu
+
+WORKDIR /soft/canu-1.7/Linux-amd64/bin
+#CMD ["/soft/canu-1.7/Linux-amd64/bin"]
+ENV PATH /soft/canu-1.7/Linux-amd64/bin/:$PATH
