@@ -37,17 +37,30 @@ RUN pip install awscli
 ##RUN rm -rf /shared/perl5.12.5
 
 ######################### install canu #################################
-RUN mkdir /soft && cd /soft
+##RUN mkdir /soft && cd /soft
 #RUN cd /soft
-WORKDIR /soft
+##WORKDIR /soft
 #RUN wget https://github.com/marbl/canu/archive/v1.7.tar.gz
-ADD https://github.com/marbl/canu/archive/v1.7.tar.gz /soft
-RUN tar -xvf v1.7.tar.gz
+##ADD https://github.com/marbl/canu/archive/v1.7.tar.gz /soft
+##RUN tar -xvf v1.7.tar.gz
 #WORKDIR /soft/canu-1.7/src
 #RUN make -j8
-RUN cd canu-1.7/src && make -j8
+##RUN cd canu-1.7/src && make -j8
 #RUN chmod +x /soft/canu-1.7/Linux-amd64/bin/canu
 
-WORKDIR /soft/canu-1.7/Linux-amd64/bin
+##WORKDIR /soft/canu-1.7/Linux-amd64/bin
 #CMD ["/soft/canu-1.7/Linux-amd64/bin"]
+##ENV PATH /soft/canu-1.7/Linux-amd64/bin/:$PATH
+
+
+#============canu latest===========
+RUN mkdir /soft && cd /soft
+WORKDIR /soft
+ADD https://github.com/marbl/canu/archive/v1.7.tar.gz /soft
+RUN tar -xvf v1.7.tar.gz \
+&& yum groupinstall -y "Development Tools" \
+&& yum install -y gcc \
+&& cd canu-1.7/src && make -j8
+WORKDIR /soft/canu-1.7/Linux-amd64/bin 
 ENV PATH /soft/canu-1.7/Linux-amd64/bin/:$PATH
+
