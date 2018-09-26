@@ -1,0 +1,10 @@
+FROM centos:centos7
+
+WORKDIR /root
+RUN wget https://www.python.org/ftp/python/3.6.2/Python-3.6.2.tgz --no-check-certificate
+RUN tar zxvf Python-3.6.2.tgz
+WORKDIR /root/Python-3.6.2
+RUN ./configure --prefix=/opt/python-3.6.2
+RUN make
+RUN make install
+ENV PATH /opt/python-3.6.2/bin:$PATH
