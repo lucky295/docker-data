@@ -59,8 +59,9 @@ WORKDIR /soft
 ADD https://github.com/marbl/canu/archive/v1.7.tar.gz /soft
 RUN tar -xvf v1.7.tar.gz \
 && yum groupinstall -y "Development Tools" \
-&& yum install -y gcc \
-&& cd canu-1.7/src && make -j8
+&& yum install -y gcc 
+WORKDIR /soft/canu-1.7/src 
+RUN make -j8
 WORKDIR /soft/canu-1.7/Linux-amd64/bin 
 ENV PATH /soft/canu-1.7/Linux-amd64/bin/:$PATH
 
