@@ -3,12 +3,16 @@ FROM centos:centos7
 MAINTAINER asrini <srinivas.mysql95@gmail.com>
 
 ##=====================Install required basic packages=======================
+RUN yum update -y
+RUN yum install -y wget curl
+RUN yum groupinstall -y "Development Tools"
+RUN yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel
+RUN yum install -y gcc
+#RUN yum -y install gcc-c++ 
+#RUN yum install -y make
+#Run yum install -y perl
 
-RUN yum update -y 
-RUN yum install -y git 
-RUN yum install -y wget 
-RUN yum install -y gcc 
-RUN yum install -y tar
+##========================Install Python3 ===================
 
 WORKDIR /root
 RUN wget https://www.python.org/ftp/python/3.6.2/Python-3.6.2.tgz --no-check-certificate
