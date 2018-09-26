@@ -1,6 +1,6 @@
 FROM centos:centos7
 
-MAINTAINAER asrini <srinivas.mysql95@gmail.com>
+MAINTAINER asrini <srinivas.mysql95@gmail.com>
 
 ##=====================Install required basic packages=======================
 
