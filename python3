@@ -5,10 +5,10 @@ MAINTAINER asrini <srinivas.mysql95@gmail.com>
 ##=====================Install required basic packages=======================
 
 RUN yum update -y 
-RUN yum install -y \
-  && wget \
-  && gcc \
-  && tar
+RUN yum install -y git 
+RUN yum install -y wget 
+RUN yum install -y gcc 
+RUN yum install -y tar
 
 WORKDIR /root
 RUN wget https://www.python.org/ftp/python/3.6.2/Python-3.6.2.tgz --no-check-certificate
