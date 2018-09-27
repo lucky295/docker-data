@@ -1,0 +1,44 @@
+FROM centos:centos7
+
+MAINTAINER asrini < sriniavsarao.a@pioneer.com>
+
+################# set environment variables ############################
+ENV http_proxy=http://jdcproxy.phibred.com:8080
+#ENV https_proxy=http://jdcproxy.phibred.com:8080
+#ENV no_proxy=localhost,0.0.0.0,127.0.0.1,192.168.99.100,*.phibred.com,*.dupont.com
+ENV ftp_proxy=http://jdcproxy.phibred.com:8080
+
+#################### Install required packages #########################
+RUN yum update -y
+RUN yum install -y wget curl
+RUN yum groupinstall -y "Development Tools"
+RUN yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel
+RUN yum install -y gcc
+#RUN yum -y install gcc-c++ 
+#RUN yum install -y make
+#Run yum install -y perl
+
+################## aws-cli install #####################################
+RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+
+RUN python get-pip.py
+RUN pip install awscli
+
+#============canu latest===========
+RUN mkdir /soft && cd /soft
+WORKDIR /soft
+ADD https://github.com/marbl/canu/archive/v1.7.tar.gz /soft
+RUN tar -xvf v1.7.tar.gz \
+&& yum groupinstall -y "Development Tools" \
+&& yum install -y gcc 
+WORKDIR /soft/canu-1.7/src 
+RUN make -j8
+WORKDIR /soft/canu-1.7/Linux-amd64/bin 
+ENV PATH /soft/canu-1.7/Linux-amd64/bin/:$PATH
+
+#======== download data to test ===================
+
+RUN yum install -y gnuplot
+WORKDIR /soft
+RUN wget http://gembox.cbcb.umd.edu/mhap/raw/ecoli_p6_25x.filtered.fastq
+RUN mv ecoli_p6_25x.filtered.fastq pacbio.fastq
