@@ -1,0 +1,215 @@
+FROM centos:centos7
+
+MAINTAINER asrini < sriniavsarao.a@pioneer.com>
+
+#=================/ set environment variables /#==================================================================
+
+#ENV http_proxy=http://jdcproxy.phibred.com:8080
+#ENV https_proxy=http://jdcproxy.phibred.com:8080
+#ENV ftp_proxy=http://jdcproxy.phibred.com:8080
+
+#=======================/ Install required packages /#=============================================================
+
+RUN yum -y update
+RUN yum install -y \
+        wget \
+        curl \
+        java-1.8.0-openjdk java-1.8.0-openjdk-devel \
+        tar \
+        gzip \
+        git \
+        openssl \
+        openssl-devel \
+        ca-certificates \
+        xorg-x11-proto-devel \
+        zlib-devel \
+        ncurses-devel \
+		gcc \
+		gcc-++
+RUN yum -y groupinstall "Development Tools"
+
+#====================================/ conda Install /#==============================================================
+
+RUN ["/bin/bash", "-c", "wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh --no-check-certificate -O $HOME/miniconda.sh"]
+RUN yum install -y bzip2
+RUN chmod 0755 $HOME/miniconda.sh
+RUN ["/bin/bash", "-c", "$HOME/miniconda.sh -b -p $HOME/conda"]
+ENV PATH="/root/conda/bin:${PATH}"
+RUN rm $HOME/miniconda.sh
+
+#==============================/ bam2fastx /#===========================================================================
+
+#RUN conda config --set ssl_verify false
+RUN conda install -c bioconda bam2fastx
+
+#=============================/ install canu /#===========================================================================
+
+RUN mkdir /soft && cd /soft
+WORKDIR /soft
+ADD https://github.com/marbl/canu/archive/v1.7.tar.gz /soft
+RUN tar -xvf v1.7.tar.gz \
+&& rm -rf v1.7.tar.gz \
+&& yum groupinstall -y "Development Tools" \
+&& yum install -y gcc \
+&& cd canu-1.7/src && make -j8
+WORKDIR /soft/canu-1.7/Linux-amd64/bin
+ENV PATH /soft/canu-1.7/Linux-amd64/bin/:$PATH
+
+#=============================/ Mummer Install /#==========================================================================
+
+WORKDIR /root
+RUN wget https://github.com/mummer4/mummer/releases/download/v4.0.0beta2/mummer-4.0.0beta2.tar.gz --no-check-certificate \
+&& tar -xvf mummer-4.0.0beta2.tar.gz \
+&& rm -rf mummer-4.0.0beta2.tar.gz
+WORKDIR /root/mummer-4.0.0beta2
+RUN ./configure --prefix=/usr/local/mummer \
+&& make \
+&& make install
+ENV PATH /root/mummer-4.0.0beta2/:$PATH
+
+#=============================/ emboss install /#==========================================================================
+WORKDIR /root
+RUN wget ftp://emboss.open-bio.org/pub/EMBOSS/emboss-latest.tar.gz \
+&& tar -xvf emboss-latest.tar.gz \
+&& rm -rf /root/emboss-latest.tar.gz
+WORKDIR /root/EMBOSS-6.6.0
+RUN ./configure --without-x \
+&& make -j8
+
+#============================= / Prodigal / #=============================================================================
+WORKDIR /root
+RUN wget wget https://github.com/hyattpd/Prodigal/archive/v2.6.3.tar.gz \
+&& tar -xvf v2.6.3.tar.gz \
+&& rm -rf /root/v2.6.3.tar.gz
+WORKDIR /root/Prodigal-2.6.3
+RUN make Install \
+&& install -d -m 0755 /usr/local/bin \
+&& install -m 0755 prodigal /usr/local/bin
+
+
+#==============================/bwa install/#==============================================================================
+
+RUN conda install -c bioconda bwa
+
+#==============================/ samtools install /#=========================================================================
+
+WORKDIR /root
+RUN wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2 -O samtools.tar.bz2 \
+&& tar -xjvf samtools.tar.bz2 \
+&& samtools.tar.bz2
+WORKDIR /root/samtools-1.3.1
+RUN ./configure -prefix=/usr/local/samtools \
+&& make -j8
+
+ENV PATH /root/samtools-1.3.1/:$PATH
+ENV PATH /root/samtools-1.3.1/misc/:$PATH
+#================================/Busco Install/#=======================================================================
+
+
+#================================/ python3 install /#=====================================================================
+
+WORKDIR /root
+RUN wget https://www.python.org/ftp/python/3.6.2/Python-3.6.2.tgz --no-check-certificate \
+&& tar zxvf Python-3.6.2.tgz \
+&& rm -rf Python-3.6.2.tgz
+WORKDIR /root/Python-3.6.2
+RUN ./configure --prefix=/opt/python-3.6.2 \
+&& make \
+&& make install
+ENV PATH /opt/python-3.6.2/bin:$PATH
+
+#==========================================/ Spades Install /#============================================================
+
+WORKDIR /root
+
+RUN wget http://cab.spbu.ru/files/release3.7.1/SPAdes-3.7.1-Linux.tar.gz \
+	&& tar -xzf SPAdes-3.7.1-Linux.tar.gz \
+  && rm -rf SPAdes-3.7.1-Linux.tar.gz
+ENV PATH /root/SPAdes-3.7.1-Linux/bin/:$PATH
+
+#================================/ pysam dependency install /#================================================================
+#####pysam:http://pypi.doubanio.com/simple/pysam/
+
+WORKDIR /root
+RUN wget http://pypi.doubanio.com/packages/07/6b/3f48a2f05fbde46f2c52fc5f9adc15d928951cd54035109d553e14b774c7/pysam-0.8.2.1.tar.gz#md5=daf63c1665fa601fc942f050f334a627 --no-check-certificate \
+	&& tar -xvf pysam-0.8.2.1.tar.gz \
+  && rm -rf pysam-0.8.2.1.tar.gz
+WORKDIR /root/pysam-0.8.2.1
+RUN python3 setup.py install
+
+#===============================/ pyfastaq dependency install /#===============================================================
+
+WORKDIR /root
+RUN git clone https://github.com/sanger-pathogens/Fastaq.git
+WORKDIR /root/Fastaq
+RUN python3 setup.py install
+
+
+#================================/ et_xmlfile dependency install /#===============================================================
+
+WORKDIR /root
+RUN wget https://bitbucket.org/openpyxl/et_xmlfile/get/8c7ad6904ebe.zip \
+	&& unzip 8c7ad6904ebe.zip \
+  && rm -rf 8c7ad6904ebe.zip
+WORKDIR /root/openpyxl-et_xmlfile-8c7ad6904ebe
+RUN python3 setup.py install
+
+
+#===================================/ jdcal dependency install /#==================================================================
+
+WORKDIR /root
+RUN git clone https://github.com/phn/jdcal.git
+WORKDIR /root/jdcal
+RUN python3 setup.py install
+
+
+#================================/ openpyx1 dependency install /#================================================================
+
+WORKDIR /root
+RUN wget https://bitbucket.org/openpyxl/openpyxl/get/77e649c3021d.zip --no-check-certificate \
+	&& unzip 77e649c3021d.zip \
+  && rm -rf 77e649c3021d.zip
+WORKDIR /root/openpyxl-openpyxl-77e649c3021d
+RUN python3 setup.py install
+
+
+#==============================/ pymummer dependency Install /#=================================================================
+
+WORKDIR /root
+RUN git clone https://github.com/sanger-pathogens/pymummer.git
+WORKDIR /root/pymummer
+#RUN chmod +x install_dependencies.sh
+RUN python3 setup.py install
+
+#==================================/ Circulator Install /#==========================================================================
+
+WORKDIR /root
+RUN wget https://github.com/sanger-pathogens/circlator/archive/v1.5.5.tar.gz --no-check-certificate \
+	&& tar -xvf v1.5.5.tar.gz \
+  && rm -rf v1.5.5.tar.gz
+WORKDIR /root/circlator-1.5.5
+RUN python3 setup.py install
+
+
+#=====================================/ Blast Install /#===============================================================================
+
+WORKDIR /root
+RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.7.1/ncbi-blast-2.7.1+-x64-linux.tar.gz --no-check-certificate \
+	&& tar -xvf ncbi-blast-2.7.1+-x64-linux.tar.gz \
+  && rm -rf ncbi-blast-2.7.1+-x64-linux.tar.gz \
+	&& mv  ncbi-blast-2.7.1+ ncbi-blast \
+	&& mkdir /root/blastdb
+WORKDIR /root/blastdb
+##RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/refseq_rna.00.tar.gz --no-check-certificate \
+	##&& tar -xvf refseq_rna.00.tar.gz \
+	##&& rm -rf refseq_rna.00.tar.gz
+##WORKDIR /root
+ENV PATH /root/ncbi-blast/bin/:$PATH
+##ENV BLASTDB /root/blastdb
+
+##==========================================================================/ pilon Install /#========================================
+
+RUN conda install -c bioconda pilon
+
+
+#############################/END/################################################
