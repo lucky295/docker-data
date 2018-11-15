@@ -1,0 +1,83 @@
+FROM amazonlinux:latest
+
+MAINTAINER asrini <srinivasarao.a@pioneer.com>
+
+#################// Install Required basic packages //##############################################################
+RUN yum update -y \
+&& yum groupinstall -y "Development Tools" \
+&& yum install -y \
+        git \
+        cmake
+
+##################// aws-cli install //##############################################################################
+RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
+&& python get-pip.py \
+&& pip install awscli
+
+####################// make require directories //#####################################################################
+
+RUN mkdir /database \
+&& mkdir /database/executables \
+&& chmod a+tw /database \
+&& chmod a+tw /database/executables 
+
+
+###########################// mpi install //#############################################################################
+RUN mkdir /database/executables/mpi \
+&& chmod a+tw /database/executables/mpi \
+&& yum install -y wget
+WORKDIR /database/executables
+RUN wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.0.tar.gz \
+&& tar -xvf openmpi-4.0.0.tar.gz \
+&& rm -rf openmpi-4.0.0.tar.gz
+WORKDIR /database/executables/openmpi-4.0.0
+RUN ./configure --prefix=/database/executables/mpi \
+&& make \
+&& make install
+ENV PATH /database/executables/mpi/bin:$PATH
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/database/executables/mpi/lib/
+
+###########################// hhsuite install //###########################################################################
+RUN mkdir /database/executables/git \
+&& mkdir /database/executables/hhsuite \
+&& chmod a+tw /database/executables/git \
+&& chmod a+tw /database/executables/hhsuite
+WORKDIR /database/executables/git
+RUN git clone https://github.com/soedinglab/hh-suite.git
+WORKDIR /database/executables/git/hh-suite
+RUN git submodule init \
+&& git submodule update \
+&& sed -i 's/FFINDEX_MAX_ENTRY_NAME_LENTH 32/FFINDEX_MAX_ENTRY_NAME_LENTH 33/g' lib/ffindex/src/ffindex.h \
+&& cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/database/executables/hhsuite \
+&& make \
+&& make install
+ENV HHLIB /database/executables/hhsuite
+ENV PATH $PATH:$HHLIB/bin:$HHLIB/scripts
+
+#######################################// psipred //#######################################################################
+WORKDIR /database/executables
+RUN wget http://bioinfadmin.cs.ucl.ac.uk/downloads/psipred/psipred.4.02.tar.gz \
+&& tar -xvf psipred.4.02.tar.gz \
+&& rm -rf psipred.4.02.tar.gz 
+WORKDIR /database/executables/psipred/src
+RUN make  \
+&& make install
+
+#################################// blast_setup //###########################################################################
+COPY blast-2.2.26-x64-linux.tar.gz /database/executables
+WORKDIR /database/executables
+RUN yum install tar
+RUN tar -xvf blast-2.2.26-x64-linux.tar.gz \
+&& rm -rf blast-2.2.26-x64-linux.tar.gz
+ENV PATH /database/executables/blast-2.2.26/bin:$PATH
+
+###############################// dssp //#####################################################################################
+RUN mkdir /database/dssp \
+&& mkdir /database/dssp/bin \
+&& mkdir /database/dssp/data \
+&& chmod -R a+tw /database/dssp 
+WORKDIR /database/dssp/bin
+RUN wget ftp://ftp.cmbi.ru.nl/pub/molbio/software/dssp-2/dssp-2.0.4-linux-i386 \
+&& chmod a+rx dssp-2.0.4-linux-i386 \
+&& ln -s dssp-2.0.4-linux-i386 dsspcmbi
+
